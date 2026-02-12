@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Certification Compass — Tailwind + Mobile Cards · Filter refined</title>
+  <!-- Tailwind via CDN (v3) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* essential animations — pure Tailwind can't do keyframes */
+    .animate-fade-slide {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeSlideIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+    @keyframes fadeSlideIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* card lift – subtle */
+    .card-lift {
+      transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s;
+    }
+    .card-lift:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 30px -12px rgba(0, 0, 0, 0.08);
+      border-color: #bfdbfe;
+    }
+    /* custom select arrow – tailwind friendly */
+    .filter-select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234b5563' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.3rem center;
+      background-repeat: no-repeat;
+      background-size: 1.2em 1.2em;
+      padding-right: 1.8rem;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      appearance: none;
+    }
+    /* desktop row hover */
+    .table-row-hover:hover {
+      background-color: rgba(219, 234, 254, 0.5);
+    }
+    /* pulse for filter activity */
+    .pulse-border {
+      animation: borderPulse 1s ease-out;
+    }
+    @keyframes borderPulse {
+      0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.1); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+    }
+    /* MOBILE: hide clear filter button when screen is below md breakpoint */
+    @media (max-width: 767px) {
+      .clear-filter-btn {
+        display: none !important;
+      }
+    }
+    /* ensure button is visible on desktop */
+    @media (min-width: 768px) {
+      .clear-filter-btn {
+        display: inline-flex !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-indigo-50/20 to-blue-50/30 font-sans antialiased min-h-screen p-4 md:p-7">
+
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- ======= HEADER ======= -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black mb-2 bg-gradient-to-r from-blue-700 to-indigo-800 bg-clip-text text-transparent tracking-tight">
+        Certification Comparison
+      </h1>
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm md:text-base text-gray-600">
+        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> 10 programs</span>
+        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 bg-indigo-400 rounded-full"></span> Dual‑view</span>
+        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 bg-blue-300 rounded-full"></span> Tailwind cards</span>
+      </div>
+    </div>
+
+    <!-- ======= GLOBAL CLEAR BUTTON ======= -->
+    <!-- this button will be hidden on mobile via CSS class + visible on desktop -->
+    <div class="flex justify-center mb-8 clear-filter-btn">
+      <button onclick="clearAllFilters()" 
+        class="group relative inline-flex items-center gap-2 rounded-full border-2 border-blue-200 bg-white/80 px-7 py-2.5 text-sm font-medium text-blue-800 shadow-sm backdrop-blur-sm transition-all hover:scale-105 hover:border-blue-400 hover:bg-white hover:shadow-md">
+        <span class="text-lg transition-transform group-hover:rotate-12">⟲</span>
+        <span>Clear filters</span>
+        <span class="absolute -bottom-1 left-1/2 h-0.5 w-0 bg-blue-500 transition-all group-hover:w-1/3"></span>
+      </button>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- DESKTOP: TABLE VIEW (hidden on mobile)         -->
+    <!-- ============================================== -->
+    <div id="desktopTableWrapper" class="hidden md:block rounded-2xl bg-white/80 shadow-xl shadow-indigo-100/40 backdrop-blur-sm border border-white/30 transition-all">
+      <div class="overflow-x-auto rounded-2xl">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-gradient-to-r from-blue-700 to-indigo-700 text-white">
+            <tr>
+              <th scope="col" class="px-5 py-4 font-semibold">
+                📁 Department
+                <select id="filterDept" onchange="filterCertifications()" class="filter-select mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-1.5 text-xs font-normal text-gray-800 ring-1 ring-gray-300 transition focus:ring-2 focus:ring-blue-400"></select>
+              </th>
+              <th scope="col" class="px-5 py-4 font-semibold">
+                🧰 Task & Skills
+                <select id="filterTask" onchange="filterCertifications()" class="filter-select mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-1.5 text-xs font-normal text-gray-800 ring-1 ring-gray-300 transition focus:ring-2 focus:ring-blue-400"></select>
+              </th>
+              <th scope="col" class="px-5 py-4 font-semibold">
+                🏢 Vendor
+                <select id="filterVendor" onchange="filterCertifications()" class="filter-select mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-1.5 text-xs font-normal text-gray-800 ring-1 ring-gray-300 transition focus:ring-2 focus:ring-blue-400"></select>
+              </th>
+              <th scope="col" class="px-5 py-4 font-semibold">
+                🎓 Certification
+                <select id="filterCert" onchange="filterCertifications()" class="filter-select mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-1.5 text-xs font-normal text-gray-800 ring-1 ring-gray-300 transition focus:ring-2 focus:ring-blue-400"></select>
+              </th>
+              <th scope="col" class="px-5 py-4 font-semibold">
+                💰 Cost
+                <select id="filterCost" onchange="filterCertifications()" class="filter-select mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-1.5 text-xs font-normal text-gray-800 ring-1 ring-gray-300 transition focus:ring-2 focus:ring-blue-400"></select>
+              </th>
+              <th scope="col" class="px-5 py-4 font-semibold">
+                ✨ Justification
+                <select id="filterJust" onchange="filterCertifications()" class="filter-select mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-1.5 text-xs font-normal text-gray-800 ring-1 ring-gray-300 transition focus:ring-2 focus:ring-blue-400"></select>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-gray-200 bg-white/90"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MOBILE CARD VIEW (visible only < 768px)        -->
+    <!-- ============================================== -->
+    <div id="mobileCardGrid" class="grid grid-cols-1 gap-5 md:hidden">
+      <!-- Cards injected dynamically - each card follows exactly the style from the image:
+           Department, Vendor, Certification name, Skills (with ₱ cost), Justification.
+           NO CLEAR BUTTON inside mobile cards — and global clear button is hidden on mobile via CSS -->
+    </div>
+
+    <!-- subtle meta (counter) -->
+    <div class="text-center text-xs text-gray-400 mt-10 flex justify-center gap-3">
+      <span id="resultCount" class="inline-block bg-white/50 px-4 py-1.5 rounded-full shadow-sm border border-gray-200/60"></span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ----- DATA (all certifications from Excel sheet) -----
+      const certifications = [
+        { department: "IT Department", task: "Enterprise Network", vendor: "Cisco System", name: "Cisco Certified Network Associate (CCNA)", cost: "₱17,429", justification: "Focuses on teaching how to install, configure, operate, and troubleshoot routers and network infrastructure" },
+        { department: "SDI Department", task: "Agile Software Development", vendor: "Scrum Alliance", name: "Certified Scrum Developer (CSD)", cost: "₱46,462", justification: "Focuses on Agile Software Development validating Skills in iterative development, collaboration, continuous, and integration" },
+        { department: "IT Department", task: "Security Fundamentals", vendor: "CompTIA", name: "CompTIA Security+", cost: "₱23,028", justification: "Validates security fundamentals by covering risk assessment, cryptography, and network security" },
+        { department: "SDI Department", task: "Software Development Management", vendor: "Oracle", name: "Oracle Certified Professional: Java SE 17 Developer", cost: "₱14,247", justification: "Supports software development by validating advanced Java programming skills, and application design principles" },
+        { department: "IT Department", task: "Cloud Infrastructure Management", vendor: "CompTIA", name: "CompTIA Cloud+", cost: "₱20,818", justification: "Ensures cloud resources are optimized aligning with capacity to meet business needs" },
+        { department: "SDI Department", task: "Azure AI Solutions", vendor: "Microsoft", name: "Microsoft Certified: Azure AI Engineer Associate (AI-102)", cost: "₱9,595", justification: "Give engineers the practical, secure, and scalable foundation needed to deliver intelligent applications" },
+        { department: "IT Department", task: "Cloud Infrastructure Management", vendor: "Amazon Web Services", name: "AWS Certified Solution Architect", cost: "₱17,429", justification: "Provides the structured control needed to align AWS cloud environment with enterprise goals" },
+        { department: "SDI Department", task: "Cloud Infrastructure Management", vendor: "Google Cloud", name: "Google Cloud Associate Cloud Engineer", cost: "₱7,262", justification: "Supports the engineer's role in configuring, deploying and maintaining Google Cloud resources" },
+        { department: "IT Department", task: "Cloud Fundamentals", vendor: "Amazon Web Services", name: "AWS Certified Cloud Practitioner", cost: "₱5,809", justification: "Provide the baseline knowledge to understand how AWS services work together" },
+        { department: "SDI Department", task: "Cloud Application Development", vendor: "Amazon Web Services", name: "AWS Certified Developer Associate", cost: "₱8,550", justification: "Equips developers to design, build, and deploy applications that fully leverage AWS services" }
+      ];
+
+      // ----- Mapping: select ID → property name
+      const filterConfig = [
+        { id: "filterDept", prop: "department" },
+        { id: "filterTask", prop: "task" },
+        { id: "filterVendor", prop: "vendor" },
+        { id: "filterCert", prop: "name" },
+        { id: "filterCost", prop: "cost" },
+        { id: "filterJust", prop: "justification" }
+      ];
+
+      // ----- DOM elements -----
+      const tableBody = document.getElementById("tableBody");
+      const mobileGrid = document.getElementById("mobileCardGrid");
+      const desktopWrapper = document.getElementById("desktopTableWrapper");
+      const resultSpan = document.getElementById("resultCount");
+
+      // ----- Helper: escape HTML -----
+      function escapeHTML(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // ----- Populate all filter selects with unique sorted values -----
+      function populateFilters() {
+        filterConfig.forEach(({ id, prop }) => {
+          const select = document.getElementById(id);
+          if (!select) return;
+          const uniqueValues = [...new Set(certifications.map(c => c[prop]))].sort((a,b) => a.localeCompare(b));
+          let options = '<option value="">All</option>';
+          uniqueValues.forEach(val => {
+            options += `<option value="${escapeHTML(val)}">${escapeHTML(val)}</option>`;
+          });
+          select.innerHTML = options;
+          select.value = ""; // default "All"
+        });
+      }
+
+      // ----- RENDER: both desktop rows & mobile cards, with Tailwind classes and exact style from prompt -----
+      function renderFiltered(data) {
+        tableBody.innerHTML = "";
+        mobileGrid.innerHTML = "";
+
+        // update result count
+        if (resultSpan) resultSpan.textContent = `📋 ${data.length} certification${data.length !== 1 ? 's' : ''} displayed`;
+
+        // ----- EMPTY STATE -----
+        if (data.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500 italic bg-gray-50/50">🔍 No certifications match. <button onclick="clearAllFilters()" class="text-blue-600 underline ml-1">Clear</button></td></tr>`;
+          mobileGrid.innerHTML = `<div class="col-span-1 flex flex-col items-center justify-center bg-white/80 p-10 rounded-3xl border border-dashed border-gray-200"><span class="text-4xl mb-3">🧐</span><p class="text-gray-500 italic">No matching certifications</p></div>`;
+          return;
+        }
+
+        // ----- DESKTOP ROWS (fade animation) -----
+        data.forEach((cert, index) => {
+          const row = document.createElement("tr");
+          row.className = "table-row-hover border-b border-gray-100 transition-all duration-200 animate-fade-slide";
+          row.style.animationDelay = `${index * 45}ms`;
+          row.innerHTML = `
+            <td class="px-5 py-4 font-medium text-gray-800">${escapeHTML(cert.department)}</td>
+            <td class="px-5 py-4 text-xs text-gray-600">${escapeHTML(cert.task)}</td>
+            <td class="px-5 py-4 text-gray-700">${escapeHTML(cert.vendor)}</td>
+            <td class="px-5 py-4 font-bold text-indigo-700">${escapeHTML(cert.name)}</td>
+            <td class="px-5 py-4 font-semibold text-gray-900">${escapeHTML(cert.cost)}</td>
+            <td class="px-5 py-4 text-sm italic text-gray-500/90">${escapeHTML(cert.justification)}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        // ----- MOBILE CARDS –– EXACT VISUAL STYLE from image description: 
+        // Department (IT DEPARTMENT), Vendor (Cisco), Cert name (CCIE), Skills, Cost, Justification.
+        // No "Clear filters" button inside card – global clear button is hidden via CSS on mobile.
+        data.forEach((cert, index) => {
+          const card = document.createElement("div");
+          card.className = "group relative bg-white rounded-2xl p-5 shadow-sm border border-gray-200/80 transition-all duration-300 card-lift animate-fade-slide flex flex-col";
+          card.style.animationDelay = `${index * 60}ms`;
+
+          // card layout matches described hierarchy:
+          // Department (all caps / bold) + Vendor on same line
+          card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-bold text-base uppercase tracking-wide text-blue-800">${escapeHTML(cert.department)}</span>
+              <span class="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">${escapeHTML(cert.vendor)}</span>
+            </div>
+            
+            <h3 class="text-xl font-extrabold text-gray-800 mb-3">${escapeHTML(cert.name)}</h3>
+            
+            <div class="flex items-baseline gap-2 mb-2 text-sm">
+              <span class="font-semibold text-gray-700">- Skills:</span>
+              <span class="text-gray-600">${escapeHTML(cert.task)}</span>
+            </div>
+            
+            <div class="flex items-center mt-1 mb-2">
+              <span class="text-lg font-black text-gray-900">💰 ${escapeHTML(cert.cost)}</span>
+            </div>
+            
+            <p class="text-sm italic text-gray-600 border-t border-gray-200/70 pt-3 mt-1">
+              ${escapeHTML(cert.justification)}
+            </p>
+            
+            <!-- subtle underline effect (optional) -->
+            <span class="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-200 via-indigo-200 to-blue-200 scale-x-0 transition-transform group-hover:scale-x-100 rounded-b-2xl"></span>
+          `;
+          mobileGrid.appendChild(card);
+        });
+      }
+
+      // ----- FILTER function (case‑insensitive substring, AND) -----
+      window.filterCertifications = function() {
+        const filterValues = filterConfig.map(({ id }) => {
+          const el = document.getElementById(id);
+          return el ? el.value.toLowerCase().trim() : "";
+        });
+
+        const filtered = certifications.filter(cert => {
+          for (let i = 0; i < filterConfig.length; i++) {
+            const filterVal = filterValues[i];
+            if (filterVal === "") continue;
+            const prop = filterConfig[i].prop;
+            const cellValue = String(cert[prop]).toLowerCase();
+            if (!cellValue.includes(filterVal)) return false;
+          }
+          return true;
+        });
+
+        renderFiltered(filtered);
+
+        // pulse effect on desktop wrapper (only desktop)
+        if (desktopWrapper && filterValues.some(v => v !== "")) {
+          desktopWrapper.classList.add("pulse-border");
+          setTimeout(() => desktopWrapper.classList.remove("pulse-border"), 1000);
+        }
+      };
+
+      // ----- CLEAR all filters (button visible only on desktop per CSS) -----
+      window.clearAllFilters = function() {
+        filterConfig.forEach(({ id }) => {
+          const sel = document.getElementById(id);
+          if (sel) sel.value = "";
+        });
+        renderFiltered(certifications);
+      };
+
+      // ----- INIT -----
+      populateFilters();
+      
+      // force default "All" after populate, then render all data
+      setTimeout(() => {
+        filterConfig.forEach(({ id }) => {
+          const sel = document.getElementById(id);
+          if (sel) sel.value = "";
+        });
+        renderFiltered(certifications);
+      }, 5);
+
+      if (document.readyState === "complete" || document.readyState === "interactive") {
+        setTimeout(() => {
+          filterConfig.forEach(({ id }) => {
+            const sel = document.getElementById(id);
+            if (sel) sel.value = "";
+          });
+          renderFiltered(certifications);
+        }, 10);
+      }
+    })();
+  </script>
+
+  <!-- noscript fallback -->
+  <noscript>
+    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-yellow-100 text-yellow-800 px-5 py-3 rounded-full shadow-md">
+      ⚡ Enable JavaScript for filters and cards.
+    </div>
+  </noscript>
+</body>
+</html>
